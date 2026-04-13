@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Supplier Email Hub — Spec</title>
+
+<style>
+
+  body { font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 24px 80px; color: #111; line-height: 1.6; font-size: 15px; }
+
+  h1 { font-size: 26px; color: #1D9E75; border-bottom: 2px solid #1D9E75; padding-bottom: 6px; margin-top: 40px; }
+
+  h2 { font-size: 18px; margin-top: 28px; }
+
+  h3 { font-size: 15px; margin-top: 20px; color: #444; }
+
+  p { margin: 10px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+
+  th { background: #1D9E75; color: #fff; padding: 7px 10px; text-align: left; }
+
+  td { border: 1px solid #ddd; padding: 7px 10px; vertical-align: top; }
+
+  tr:nth-child(even) td { background: #f9f9f9; }
+
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+
+  .note { background: #f0fbf6; border-left: 3px solid #1D9E75; padding: 10px 14px; margin: 12px 0; font-size: 14px; }
+
+  ul, ol { padding-left: 22px; }
+
+  li { margin-bottom: 4px; }
+
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 36px 0; }
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<h1 style="font-size:36px; border:none; margin-top:0;">Supplier Email Hub</h1>
+
+<p style="color:#888; margin-top:-4px;">Feature Specification &nbsp;·&nbsp; Travel Collection CRM &nbsp;·&nbsp; Bookings Module &nbsp;·&nbsp; April 2026</p>
+
+
+
+<hr>
+
+
+
+<h1>1. Overview</h1>
+
+<p>The Supplier Email Hub is a modal component integrated into the Trip Bookings List. It gives the Operations team a single interface to read, compose, and send emails to all suppliers on a trip — covering initial booking requests, modifications, cancellations, and follow-up reminders.</p>
+
+
+
+<h2>1.1 Problems it solves</h2>
+
+<ul>
+
+  <li>Sending booking emails to multiple suppliers is slow and error-prone when done one by one.</li>
+
+  <li>There is no consolidated view of which suppliers have been contacted, confirmed, and which still need a reminder.</li>
+
+  <li>Ops has no structured way to flag a booking for a follow-up reminder after sending an email.</li>
+
+  <li>Email history per supplier is scattered — Ops cannot see the full thread when composing a reply.</li>
+
+</ul>
+
+
+
+<h2>1.2 Entry point</h2>
+
+<p>A <strong>Send emails</strong> button is added to the Bookings List toolbar (alongside "Import Bookings" and "Save"). Clicking it opens the Supplier Email Hub modal with a <strong>mode selector</strong>:</p>
+
+<table>
+
+  <tr><th>Mode</th><th>Purpose</th><th>Highlights suppliers with…</th></tr>
+
+  <tr><td>Booking emails</td><td>Hold requests, confirmations, modifications</td><td>At least one booking in Draft or On Hold</td></tr>
+
+  <tr><td>Reminders</td><td>Follow-up reminders</td><td>At least one booking with reminder status None or Needed</td></tr>
+
+</table>
+
+<p>A <strong>← Change mode</strong> link in the modal footer lets the user switch without closing.</p>
+
+
+
+<hr>
+
+
+
+<h1>2. Modal Layout</h1>
+
+<p>The modal is a full-screen 3-panel layout:</p>
+
+<table>
+
+  <tr><th>Panel</th><th>Width</th><th>Always visible</th><th>Purpose</th></tr>
+
+  <tr><td>Left</td><td>~230px</td><td>Yes</td><td>Supplier list with filters</td></tr>
+
+  <tr><td>Middle</td><td>Flex</td><td>Yes</td><td>Thread list or compose area</td></tr>
+
+  <tr><td>Right</td><td>~260px</td><td>Yes</td><td>Bookings + Parameters tabs (appear after a template is chosen)</td></tr>
+
+</table>
+
+
+
+<hr>
+
+
+
+<h1>3. Left Panel — Supplier List</h1>
+
+
+
+<h2>3.1 Filter bar</h2>
+
+<table>
+
+  <tr><th>Filter</th><th>Shows suppliers where…</th></tr>
+
+  <tr><td>All (default)</td><td>All suppliers on the trip</td></tr>
+
+  <tr><td>Booking needed</td><td>At least one booking has status Draft or On Hold</td></tr>
+
+  <tr><td>Reminder needed</td><td>At least one booking has reminder status None or Needed</td></tr>
+
+</table>
+
+<p>Suppliers excluded by the active filter are dimmed rather than hidden.</p>
+
+
+
+<h2>3.2 Supplier rows</h2>
+
+<p>Each row shows:</p>
+
+<ul>
+
+  <li>Supplier name, date range, booking count</li>
+
+  <li><strong>Booking status breakdown</strong> — badge per distinct status across all bookings (e.g. "2 On Hold · 2 Draft")</li>
+
+  <li><strong>Reminder status breakdown</strong> — clock icon + label per distinct reminder status (e.g. "2 Needed · 1 Sent")</li>
+
+</ul>
+
+<p>Clicking a row loads that supplier in the Middle panel. Only one supplier is active at a time — no multi-select.</p>
+
+
+
+<h2>3.3 Footer badge</h2>
+
+<p>Shows <code>X / N suppliers confirmed</code> where confirmed = all bookings for that supplier are in Requested or Booked status.</p>
+
+
+
+<hr>
+
+
+
+<h1>4. Middle Panel — Thread List &amp; Compose</h1>
+
+
+
+<h2>4.1 Thread list (step 1)</h2>
+
+<p>When a supplier is selected, the middle panel shows:</p>
+
+<ul>
+
+  <li>Supplier name and email in the panel header</li>
+
+  <li>List of existing email threads (subject, last message preview, date)</li>
+
+  <li>A "New thread" option at the bottom</li>
+
+</ul>
+
+
+
+<h2>4.2 Compose area (step 2)</h2>
+
+<table>
+
+  <tr><th>Field</th><th>Behaviour</th></tr>
+
+  <tr><td>From</td><td>Read-only. Current user's email.</td></tr>
+
+  <tr><td>To</td><td>Pre-filled from supplier record. Editable.</td></tr>
+
+  <tr><td>Subject</td><td>Existing thread: locked to <code>Re: [thread subject]</code>. New thread: open input.</td></tr>
+
+  <tr><td>Template</td><td>Dropdown. Changing it regenerates the email body and right panel parameters.</td></tr>
+
+  <tr><td>Email body</td><td>Auto-generated from template + selected bookings + parameter values. Editable.</td></tr>
+
+</table>
+
+
+
+<h2>4.3 Previous emails (existing thread only)</h2>
+
+<p>Thread history shown below the email body, newest-first. Most recent email expanded by default; older ones collapsed. Each email shows direction (Sent / Received), sender, date, preview, and full body on expand. Green left border = sent, amber = received.</p>
+
+
+
+<hr>
+
+
+
+<h1>5. Right Panel — Options</h1>
+
+<p>Shows "Select a template to see options" until a template is chosen. Two tabs then appear.</p>
+
+
+
+<h2>5.1 Bookings tab</h2>
+
+<p>Lists all bookings for the selected supplier. Each row shows:</p>
+
+<ul>
+
+  <li>Checkbox to include/exclude from the email</li>
+
+  <li>Service name and dates</li>
+
+  <li>Booking status badge</li>
+
+  <li>Reminder status chip (clock icon + label)</li>
+
+</ul>
+
+<p>Tab badge shows <code>selected / total</code> (e.g. "2/4"). Toggling a booking immediately regenerates the email body.</p>
+
+
+
+<h2>5.2 Parameters tab (default)</h2>
+
+<p>Shows template-specific parameters. Three types are supported:</p>
+
+<table>
+
+  <tr><th>Type</th><th>UI control</th><th>Example</th></tr>
+
+  <tr><td>Boolean</td><td>Checkbox</td><td>CC Finance team</td></tr>
+
+  <tr><td>Text</td><td>Free text input</td><td>Special instructions</td></tr>
+
+  <tr><td>Dropdown</td><td>Select</td><td>Language: English / French / Spanish</td></tr>
+
+</table>
+
+<p>Changing any parameter immediately regenerates the email body. This tab is the default active tab when a template is chosen.</p>
+
+<p>CC Finance team and CC Operations team are parameters on each template (not hardcoded fields), with their own defaults per template.</p>
+
+
+
+<hr>
+
+
+
+<h1>6. Compose Footer</h1>
+
+
+
+<h2>6.1 Status summary</h2>
+
+<p>Once a template is chosen, a summary bar appears above the action buttons showing which fields will be updated on send and their before → after values. Only fields that actually change are shown.</p>
+
+<ul>
+
+  <li><strong>Booking status</strong> — breakdown of current statuses across selected bookings → new status they will all move to</li>
+
+  <li><strong>Reminder status</strong> — current reminder breakdown → new value</li>
+
+</ul>
+
+
+
+<h2>6.2 Reminder needed toggle</h2>
+
+<p>Appears for all template families <em>except</em> Reminder. <strong>Checked by default</strong> when a template is chosen.</p>
+
+<ul>
+
+  <li><strong>Checked</strong> → reminder status of all selected bookings will be set to <code>Needed</code></li>
+
+  <li><strong>Unchecked</strong> → reminder status of all selected bookings will be set to <code>Not needed</code></li>
+
+</ul>
+
+
+
+<h2>6.3 Send button</h2>
+
+<p>Disabled until a template is chosen. On click:</p>
+
+<ol>
+
+  <li>The email is sent to the supplier.</li>
+
+  <li>Status changes are applied automatically to all selected bookings (see Section 7).</li>
+
+  <li>A confirmation screen shows: supplier name, template used, and the exact field changes (before → after badges). Clicking Done returns to the thread list.</li>
+
+</ol>
+
+
+
+<hr>
+
+
+
+<h1>7. Status Logic on Send</h1>
+
+<p>Status changes apply automatically to all selected bookings. The new status depends on the template family chosen.</p>
+
+
+
+<h2>7.1 Booking status</h2>
+
+<table>
+
+  <tr><th>Template family</th><th>New booking status</th><th>Notes</th></tr>
+
+  <tr><td>Booking</td><td>Requested</td><td>Regardless of prior status</td></tr>
+
+  <tr><td>Modification</td><td>Requested</td><td>Regardless of prior status</td></tr>
+
+  <tr><td>Cancellation</td><td>Cancelling</td><td>—</td></tr>
+
+  <tr><td>Reminder</td><td>No change</td><td>—</td></tr>
+
+  <tr><td>General Inquiry</td><td>No change</td><td>—</td></tr>
+
+</table>
+
+
+
+<h2>7.2 Reminder status</h2>
+
+<table>
+
+  <tr><th>Condition</th><th>New reminder status</th></tr>
+
+  <tr><td>Template family = Reminder</td><td>Sent</td></tr>
+
+  <tr><td>Non-reminder template + Reminder needed checked</td><td>Needed</td></tr>
+
+  <tr><td>Non-reminder template + Reminder needed unchecked</td><td>Not needed</td></tr>
+
+</table>
+
+
+
+<h2>7.3 Booking status values</h2>
+
+<p><code>Draft</code> · <code>On Hold</code> · <code>Requested</code> · <code>Booked</code> · <code>Cancelling</code></p>
+
+
+
+<h2>7.4 Reminder status values</h2>
+
+<p><code>None</code> · <code>Not needed</code> · <code>Needed</code> · <code>Sent</code> · <code>Confirmed</code></p>
+
+<p><code>Confirmed</code> is set manually by Ops from the Bookings List. It is not set by the hub.</p>
+
+
+
+<hr>
+
+
+
+<h1>8. Template Families &amp; Parameters</h1>
+
+
+
+<h2>8.1 Families</h2>
+
+<table>
+
+  <tr><th>Family</th><th>Templates</th></tr>
+
+  <tr><td>Booking</td><td>Hold Request (EN), Hold Request (FR), Confirmed Reservation (EN)</td></tr>
+
+  <tr><td>Modification</td><td>Modification Email (EN)</td></tr>
+
+  <tr><td>Cancellation</td><td>Cancellation (EN)</td></tr>
+
+  <tr><td>Reminder</td><td>Reminder – Confirmation (EN), Reminder – Confirmation (FR), Reminder – Payment (EN)</td></tr>
+
+  <tr><td>General</td><td>General Inquiry (EN), General Inquiry (FR)</td></tr>
+
+</table>
+
+
+
+<h2>8.2 Parameters per template</h2>
+
+<table>
+
+  <tr><th>Template</th><th>Parameters (type · default)</th></tr>
+
+  <tr><td>Hold Request (EN)</td><td>CC Finance (bool · true), CC Operations (bool · true), Include dietary info (bool · false), Language (drop · English), Special instructions (text · empty)</td></tr>
+
+  <tr><td>Hold Request (FR)</td><td>CC Finance (bool · true), CC Operations (bool · true), Langue (drop · Français)</td></tr>
+
+  <tr><td>Confirmed Reservation (EN)</td><td>CC Finance (bool · true), Include rooming list (bool · false), Include payment info (bool · true), Language (drop · English)</td></tr>
+
+  <tr><td>Modification Email (EN)</td><td>CC Finance (bool · true), CC Operations (bool · true), Reason for change (text · empty)</td></tr>
+
+  <tr><td>Cancellation (EN)</td><td>CC Finance (bool · true), CC Operations (bool · true), Reason (text · empty), Language (drop · English)</td></tr>
+
+  <tr><td>Reminder – Confirmation (EN)</td><td>CC Finance (bool · false), CC Operations (bool · true), Urgency (drop · Polite | Urgent | Final notice), Language (drop · English)</td></tr>
+
+  <tr><td>Reminder – Payment (EN)</td><td>CC Finance (bool · true), Amount due (text · empty), Currency (drop · USD | EUR | GBP | MAD)</td></tr>
+
+  <tr><td>General Inquiry (EN)</td><td>CC Operations (bool · false), Topic (text · empty), Language (drop · English)</td></tr>
+
+</table>
+
+<div class="note">The <strong>Reminder needed</strong> toggle (Section 6.2) is not a template parameter — it is a fixed footer control that appears for all non-reminder templates.</div>
+
+
+
+<hr>
+
+
+
+<h1>9. Reminder Status Icon</h1>
+
+<p>The reminder status is represented by a clock icon + text label, color-coded by status. Used in supplier rows, booking rows, and the status summary.</p>
+
+<table>
+
+  <tr><th>Status</th><th>Background</th><th>Color</th><th>Special</th></tr>
+
+  <tr><td><code>None</code></td><td>Light gray</td><td>Gray</td><td>—</td></tr>
+
+  <tr><td><code>Not needed</code></td><td>Light gray</td><td>Gray</td><td>Clock has a diagonal cross-through line</td></tr>
+
+  <tr><td><code>Needed</code></td><td>Light amber</td><td>Amber</td><td>—</td></tr>
+
+  <tr><td><code>Sent</code></td><td>Light blue</td><td>Blue</td><td>—</td></tr>
+
+  <tr><td><code>Confirmed</code></td><td>Light green</td><td>Green</td><td>—</td></tr>
+
+</table>
+
+
+
+<hr>
+
+
+
+<h1>10. Impact on Existing Features</h1>
+
+<table>
+
+  <tr><th>Feature</th><th>Impact</th></tr>
+
+  <tr><td>Operations Emails (Phase 1)</td><td>The hub reuses the existing email editor and template system. CC Finance / Operations becomes template parameters rather than hardcoded checkboxes.</td></tr>
+
+  <tr><td>Bookings List</td><td>New field added per booking: Reminder Status. Booking Status extended with the <code>Cancelling</code> value. "Send emails" button added to toolbar.</td></tr>
+
+  <tr><td>Email relationships (ticket gAP1FiAR)</td><td>Emails sent via the hub must be linked to the Trip and the relevant Booking records.</td></tr>
+
+</table>
+
+
+
+<hr>
+
+
+
+<h1>11. Out of Scope (v1)</h1>
+
+<ul>
+
+  <li>Automatic reminder scheduling or date-based reminder triggers</li>
+
+  <li>Tracking email replies automatically — confirmation is set manually by Ops</li>
+
+  <li>Bulk "send all" — Ops composes and sends one supplier at a time</li>
+
+  <li>Creating or editing email templates from within the hub</li>
+
+  <li>Sending to multiple contacts at the same supplier simultaneously</li>
+
+</ul>
+
+
+
+</body>
+
+</html>
