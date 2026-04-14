@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Email Hub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .container { max-width: 480px; width: 100%; padding: 40px 24px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 32px; }
+  .card { display: block; text-decoration: none; color: inherit; background: #fff; border: 0.5px solid #d4d2c8; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; transition: box-shadow 0.15s, border-color 0.15s; }
+  .card:hover { border-color: #1D9E75; box-shadow: 0 2px 12px rgba(29,158,117,0.1); }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .card-desc { font-size: 12px; color: #888; line-height: 1.5; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-interactive { background: #e8f5ee; color: #0a6640; }
+  .badge-spec { background: #e8f0fb; color: #1a4fa0; }
+  .arrow { margin-left: auto; color: #ccc; font-size: 18px; }
+  .card:hover .arrow { color: #1D9E75; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Supplier Email Hub</h1>
+  <p class="subtitle">Travel Collection CRM</p>
+
+  <a class="card" href="mockup.html">
+    <div class="card-title">
+      Interactive Mockup
+      <span class="badge badge-interactive">Interactive</span>
+      <span class="arrow">&rarr;</span>
+    </div>
+    <div class="card-desc">Full 3-panel prototype with supplier list, email threads, compose view, template selection, and send confirmation flow.</div>
+  </a>
+
+  <a class="card" href="supplier-email-hub-spec.html">
+    <div class="card-title">
+      Feature Specification
+      <span class="badge badge-spec">Documentation</span>
+      <span class="arrow">&rarr;</span>
+    </div>
+    <div class="card-desc">Detailed spec covering layout, status logic, template families, parameters, and integration with existing features.</div>
+  </a>
+</div>
+</body>
+</html>
